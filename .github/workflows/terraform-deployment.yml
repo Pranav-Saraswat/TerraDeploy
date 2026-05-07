@@ -1,55 +1,77 @@
-name: Multi-Cloud Terraform Deployment
+name: TerraDeploy Pipeline
 
 on:
   push:
-    branches:
-      - master
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  deploy:
+  plan:
+    name: Terraform Plan
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        env: [dev, prod]
+    
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_wrapper: false
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
-    - name: Install AWS CLI
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y awscli
+      - name: Terraform Format
+        run: terraform fmt -check
+        working-directory: terraform/environments/${{ matrix.env }}
 
-    - name: Install GCP SDK
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y google-cloud-sdk
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform/environments/${{ matrix.env }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-    - name: Authenticate with GCP
-      env:
-        GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-      run: |
-        echo "$GOOGLE_APPLICATION_CREDENTIALS" > /tmp/gcp-key.json
-        gcloud auth activate-service-account --key-file=/tmp/gcp-key.json
-        gcloud config set project ${{ secrets.GCP_PROJECT_ID }}
+      - name: Terraform Plan
+        run: terraform plan -no-color
+        working-directory: terraform/environments/${{ matrix.env }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-    - name: Configure AWS Credentials
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      run: |
-        mkdir -p ~/.aws
-        cat <<EOF > ~/.aws/credentials
-        [default]
-        aws_access_key_id = $AWS_ACCESS_KEY_ID
-        aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
-        EOF
+  apply:
+    name: Terraform Apply
+    needs: plan
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [dev, prod]
+    environment: ${{ matrix.env }} # Requires GitHub Environment approval for prod
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Make Terraform Script Executable
-      run: chmod +x ./deploy.sh
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
 
-    - name: Run Terraform Deployment
-      run: ./deploy.sh
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform/environments/${{ matrix.env }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: terraform/environments/${{ matrix.env }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          TF_VAR_gcp_project_id: ${{ secrets.GCP_PROJECT_ID }}
