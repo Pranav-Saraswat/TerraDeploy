@@ -65,4 +65,4 @@ chmod +x scripts/health-check.sh
 ```
 
 ---
-Built with ❤️ by Antigravity for the TerraDeploy Community.
+Built with ❤️ by Pranav Saraswat.
