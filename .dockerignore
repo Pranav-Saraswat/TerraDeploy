@@ -1,0 +1,36 @@
+# Version Control
+.git
+.gitignore
+
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Build Outputs
+.next
+out
+build
+dist
+
+# Terraform
+.terraform
+*.tfstate
+*.tfstate.backup
+
+# Docs
+README.md
+LICENSE
+*.png
+*.jpg
+*.jpeg
+
+# Environment
+.env
+.env*
+.vercel
+
+# Misc
+.dockerignore
+.vscode
+.idea
+*.log
