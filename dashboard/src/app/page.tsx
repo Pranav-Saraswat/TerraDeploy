@@ -113,6 +113,7 @@ export default function Home() {
                 change="+12%" 
                 icon={Cloud} 
                 trend="up" 
+                href="/resources"
               />
               <div className="relative group">
                 <div className="absolute -top-2 -right-2 z-10 bg-accent text-[8px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 animate-bounce">
@@ -124,6 +125,7 @@ export default function Home() {
                   change="+8.4%" 
                   icon={TrendingUp} 
                   trend="up" 
+                  href="/analytics"
                 />
               </div>
               <StatCard 
@@ -132,6 +134,7 @@ export default function Home() {
                 change="+0.5%" 
                 icon={Activity} 
                 trend="up" 
+                href="/monitoring"
               />
               <StatCard 
                 title="Security Posture" 
@@ -139,6 +142,7 @@ export default function Home() {
                 change="+2" 
                 icon={ShieldCheck} 
                 trend="up" 
+                href="/security"
               />
             </motion.div>
           )}

@@ -1,9 +1,11 @@
 import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Globe, ShieldCheck, Activity, Settings, BarChart3, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Overview', active: true, path: '/' },
+  { icon: LayoutDashboard, label: 'Overview', path: '/' },
   { icon: Globe, label: 'Deployments', path: '/deployments' },
   { icon: Database, label: 'Resources', path: '/resources' },
   { icon: BarChart3, label: 'Analytics', path: '/analytics' },
@@ -19,6 +21,8 @@ const providers = [
 ];
 
 export const Sidebar = () => {
+  const pathname = usePathname();
+
   return (
     <aside className="w-64 h-screen glass border-r border-border sticky top-0 flex flex-col p-6">
       <div className="flex items-center gap-3 mb-10 px-2">
@@ -28,20 +32,24 @@ export const Sidebar = () => {
         <h1 className="text-xl font-bold tracking-tight">TerraDeploy</h1>
       </div>
 
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-1">
         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-4">Main Menu</p>
-        {menuItems.map((item, idx) => (
-          <motion.div
-            key={idx}
-            whileHover={{ x: 5 }}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all ${
-              item.active ? 'bg-accent/10 text-accent shadow-sm' : 'text-muted-foreground hover:bg-muted/50'
-            }`}
-          >
-            <item.icon size={20} />
-            <span className="font-semibold text-sm">{item.label}</span>
-          </motion.div>
-        ))}
+        {menuItems.map((item, idx) => {
+          const isActive = pathname === item.path;
+          return (
+            <Link key={idx} href={item.path}>
+              <motion.div
+                whileHover={{ x: 5 }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all mb-1 ${
+                  isActive ? 'bg-accent/10 text-accent shadow-sm' : 'text-muted-foreground hover:bg-muted/50'
+                }`}
+              >
+                <item.icon size={20} />
+                <span className="font-semibold text-sm">{item.label}</span>
+              </motion.div>
+            </Link>
+          );
+        })}
 
         <div className="pt-10 space-y-4">
           <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-4 mb-2">Cloud Status</p>
