@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { TerminalConsole } from '@/components/TerminalConsole';
 import { BarChart3, TrendingDown, DollarSign, PieChart, Calendar, ChevronDown } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, AreaChart, Area } from 'recharts';
+import { motion } from 'framer-motion';
 
 const data = [
   { name: 'Jan', value: 4000 },
@@ -76,14 +77,19 @@ export default function AnalyticsPage() {
                     {[
                       { title: 'Reserved Instances', save: '$420/mo', desc: 'Optimize AWS EC2 sizing' },
                       { title: 'Unused Disks', save: '$85/mo', desc: 'Delete orphaned EBS volumes' },
+                      { title: 'Idle Load Balancers', save: '$32/mo', desc: 'Cleanup inactive ALBs' },
                     ].map((s) => (
-                      <div key={s.title} className="p-3 rounded-xl bg-white/5 border border-white/10">
+                      <motion.div 
+                        key={s.title} 
+                        whileHover={{ x: 5 }}
+                        className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-accent/50 cursor-pointer transition-all group"
+                      >
                         <div className="flex justify-between font-bold text-sm">
-                           <span>{s.title}</span>
+                           <span className="group-hover:text-accent transition-colors">{s.title}</span>
                            <span className="text-green-500">{s.save}</span>
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-1">{s.desc}</p>
-                      </div>
+                      </motion.div>
                     ))}
                  </div>
               </div>

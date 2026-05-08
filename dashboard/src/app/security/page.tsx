@@ -1,12 +1,12 @@
-'use client';
-
-import React from 'react';
+import { useState } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { TerminalConsole } from '@/components/TerminalConsole';
-import { ShieldCheck, Lock, Eye, AlertTriangle, ShieldAlert, CheckCircle2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ShieldCheck, Lock, Eye, AlertTriangle, ShieldAlert, CheckCircle2, X, Terminal, Server } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SecurityPage() {
+  const [selectedFinding, setSelectedFinding] = useState<any>(null);
+
   return (
     <div className="flex min-h-screen bg-background text-foreground">
       <Sidebar />
@@ -44,15 +44,19 @@ export default function SecurityPage() {
               <h3 className="font-bold mb-6">Recent Findings</h3>
               <div className="space-y-4">
                  {[
-                   { id: 'SEC-001', title: 'Public S3 Bucket Detected', severity: 'Critical', time: '2h ago', status: 'Fixed' },
-                   { id: 'SEC-002', title: 'Over-privileged IAM User', severity: 'High', time: '1d ago', status: 'Pending' },
-                   { id: 'SEC-003', title: 'Unencrypted EBS Volume', severity: 'Medium', time: '2d ago', status: 'In Review' },
+                   { id: 'SEC-001', title: 'Public S3 Bucket Detected', severity: 'Critical', time: '2h ago', status: 'Fixed', desc: 'Resource s3://logs-prod-01 is publicly accessible.' },
+                   { id: 'SEC-002', title: 'Over-privileged IAM User', severity: 'High', time: '1d ago', status: 'Pending', desc: 'User "deployer-01" has AdministratorAccess policy attached.' },
+                   { id: 'SEC-003', title: 'Unencrypted EBS Volume', severity: 'Medium', time: '2d ago', status: 'In Review', desc: 'Volume vol-0a2b3c in us-east-1a is not encrypted.' },
                  ].map((finding) => (
-                   <div key={finding.id} className="p-4 rounded-xl bg-white/5 border border-border hover:border-accent/50 transition-colors cursor-pointer group">
+                   <div 
+                    key={finding.id} 
+                    onClick={() => setSelectedFinding(finding)}
+                    className="p-4 rounded-xl bg-white/5 border border-border hover:border-accent/50 transition-colors cursor-pointer group"
+                   >
                       <div className="flex justify-between items-start mb-2">
                          <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full ${finding.severity === 'Critical' ? 'bg-red-500' : 'bg-yellow-500'}`} />
-                            <h4 className="text-sm font-bold">{finding.title}</h4>
+                            <span className={`w-2 h-2 rounded-full ${finding.severity === 'Critical' ? 'bg-red-500 animate-pulse' : 'bg-yellow-500'}`} />
+                            <h4 className="text-sm font-bold group-hover:text-accent transition-colors">{finding.title}</h4>
                          </div>
                          <span className="text-[10px] font-mono text-muted-foreground">{finding.id}</span>
                       </div>
@@ -86,6 +90,59 @@ export default function SecurityPage() {
               </div>
            </div>
         </div>
+
+        <AnimatePresence>
+          {selectedFinding && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="w-full max-w-lg glass border border-border rounded-3xl overflow-hidden"
+              >
+                <div className="p-6 border-b border-border flex justify-between items-center bg-white/2">
+                   <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${selectedFinding.severity === 'Critical' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                      <h3 className="font-bold text-lg">{selectedFinding.id}</h3>
+                   </div>
+                   <button onClick={() => setSelectedFinding(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                      <X size={20} />
+                   </button>
+                </div>
+                <div className="p-8 space-y-6">
+                   <div>
+                      <h4 className="text-xl font-bold mb-2">{selectedFinding.title}</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{selectedFinding.desc}</p>
+                   </div>
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-white/5 border border-border">
+                         <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Severity</p>
+                         <p className={`font-bold ${selectedFinding.severity === 'Critical' ? 'text-red-500' : 'text-yellow-500'}`}>{selectedFinding.severity}</p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-white/5 border border-border">
+                         <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Status</p>
+                         <p className="font-bold">{selectedFinding.status}</p>
+                      </div>
+                   </div>
+                   <div className="p-4 rounded-xl bg-accent/10 border border-accent/20">
+                      <div className="flex items-center gap-2 mb-2">
+                         <ShieldCheck className="text-accent" size={16} />
+                         <span className="text-xs font-bold text-accent">Remediation Guide</span>
+                      </div>
+                      <p className="text-[10px] text-blue-100/70 leading-relaxed">
+                         Run `terraform plan` to see the proposed fix. This security finding can be resolved by updating the resource policy to restrict public access.
+                      </p>
+                   </div>
+                   <div className="pt-6 border-t border-border flex justify-end gap-3">
+                      <button className="px-6 py-2 bg-accent text-white rounded-xl text-sm font-bold shadow-lg shadow-accent/20 hover:scale-105 transition-all">
+                         Auto-Remediate
+                      </button>
+                   </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         <TerminalConsole />
       </main>
